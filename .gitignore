@@ -1,0 +1,25 @@
+# History and workspace files
+.Rhistory
+.RData
+.Ruserdata
+
+# RStudio files
+.Rproj.user/
+
+# Data files (IMPORTANT)
+# This ignores all files in a folder named 'data' 
+# or any file ending in .csv, .rds, or .xlsx
+data/
+*.csv
+*.rds
+*.xlsx
+*.parquet
+
+# Large output files
+*.pdf
+*.png
+*.html
+!_site/  # Keep this if you are building a website/portfolio
+
+# Package management (if not using renv)
+.Rpackages
