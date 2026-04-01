@@ -1,0 +1,13 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+**Visualize the Mostly Cleaned Data to Identify Trends**
+
+```{r}
+
+
+
+
+```
