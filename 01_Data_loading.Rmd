@@ -3,8 +3,107 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+**Import Packages**
+
 ```{r}
 
-# Here, we load data from all three of our main datasets on the GBR
+# Import packages reproducibily
+
+pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate')
+
+for (p in pkgs) {
+  if (!require(p, character.only = TRUE)) {
+    install.packages(p)
+    library(p, character.only = TRUE)
+  }
+}
+
+```
+
+**Import Data from Device**
+
+Here, we load data from all three of our main datasets on the GBR into dataframe for analysis.
+
+The datasets themselves will actually be local to our computers to avoid issues with pushing really large files; our folder structure will be mirrored so that the code works for each of us.
+
+I (Brody) will create a OneDrive folder which contains the full datasets so we both have the same versions in our personal "Data" folder.
+
+This is also the place to rename columns and perform necessary joins.
+
+```{r}
+
+# Import Water Temperature Data
+
+Temp_Davies <- read_csv("Data/Temperature/Davies_Temp.csv") |>
+  select(time, raw_value)
+
+Temp_Heron <- read_csv("Data/Temperature/Heron_Temp.csv") |>
+  select(time, raw_value)
+
+Temp_Pandora <- read_csv("Data/Temperature/Pandora_Temp.csv") |>
+  select(time, cal_val)
+
+
+# Import Chemistry Variables
+
+Chem_eReef <- read_csv("Data/eReef/CHEM_Vars.csv") # Full Chem df
+
+# Import Physical Variables
+
+Phys_eReef <- read_csv("Data/eReef/PHYS_Vars.csv") # Full Phys df
+
+# Import Fish data
+
+Davies_fish <- read_csv("Data/Fish/Davies_fish.csv")
+
+Pandora_fish <- read_csv("Data/Fish/Pandora_fish.csv")
+
+```
+
+**Complete Pivots, Joins, and Other Filtering**
+
+```{r}
+
+# Extract pH data
+
+pH_all_sites <- Chem_eReef |>
+  filter(Variable == "PH") |>
+  pivot_wider(names_from = Variable, values_from = mean) |>
+  select(`Site Name`, `Aggregated Date/Time`, PH)
+
+# Extract CO2 data
+
+CO2_all_sites <- Chem_eReef |>
+  filter(Variable == "DIC") |>
+  pivot_wider(names_from = Variable, values_from = mean) |>
+  select(`Site Name`, `Aggregated Date/Time`, DIC)
+
+# Split Chem Data
+
+Chem_Davies <- Chem_eReef |>
+  filter(`Site Name` == "Davies Reef")
+Chem_Heron <- Chem_eReef |>
+  filter(`Site Name` == "Heron Island")
+Chem_Pandora <- Chem_eReef |>
+  filter(`Site Name` == "Pandora Reef")
+
+# Split Phys Data
+
+Phys_Davies <- Phys_eReef |>
+  filter(`Site Name` == "Davies Reef")
+Phys_Heron <- Phys_eReef |>
+  filter(`Site Name` == "Heron Island")
+Phys_Pandora <- Phys_eReef |>
+  filter(`Site Name` == "Pandora Reef")
+
+# Format Fish Data
+
+Pandora_fish_clean <- Pandora_fish |>
+  mutate(Date = decimal_date(as.POSIXct(date))) |>
+  select(Date, mean)
+
+Davies_fish_clean <- Davies_fish |>
+  mutate(Date = decimal_date(as.POSIXct(survey_date))) |>
+  select(Date, tows, cots)
 
 ```
