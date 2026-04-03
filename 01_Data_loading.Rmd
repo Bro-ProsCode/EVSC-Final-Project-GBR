@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Data Loading"
 output: html_notebook
 ---
 
@@ -44,13 +44,17 @@ Fish_AIMS_manta <- read_csv("Data/Fish/manta-tow-by-reef.csv")  # Large AIMS dat
 # Specific AIMS fish Data
 
 Agincourt_fish_model <- read_csv("Data/Fish/Agincourt_fish_modelled.csv") |>
-  select(date, mean)
+  mutate(Date = date_decimal(date)) |>
+  select(Date, mean)
+
 
 Broomfield_fish_model <- read_csv("Data/Fish/Broomfield_fish_modelled.csv") |>
-  select(date, mean)
+  mutate(Date = date_decimal(date)) |>
+  select(Date, mean)
 
 Rib_fish_model <- read_csv("Data/Fish/Rib_fish_modelled.csv") |>
-  select(date, mean)
+  mutate(Date = date_decimal(date)) |>
+  select(Date, mean)
 
 ```
 

@@ -1,15 +1,63 @@
 ---
-title: "R Notebook"
+title: "Visualization and Exploration"
 output: html_notebook
 ---
 
-**Visualize the Mostly Cleaned Data to Identify Trends**
+**Import Packages**
 
 ```{r}
 
+# Import packages reproducibily
 
+pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate')
 
+for (p in pkgs) {
+  if (!require(p, character.only = TRUE)) {
+    install.packages(p)
+    library(p, character.only = TRUE)
+  }
+}
 
+```
+
+**Import Cleaned Data**
+
+```{r}
+
+# Load all RDS files from Cleaned_Data folder
+
+files <- list.files("Data/Cleaned_Data", pattern = "\\.rds$", full.names = TRUE)
+
+for (f in files) {
+  name <- tools::file_path_sans_ext(basename(f))
+  assign(name, readRDS(f))
+}
+
+```
+
+## **Visualize the Cleaned Data to Identify Trends**
+
+#### Explore fish population data
+
+```{r}
+
+# Combine the fish data
+
+fish_combined <- bind_rows(
+  Agincourt_fish_model %>% mutate(Site = "Agincourt"),
+  Broomfield_fish_model %>% mutate(Site = "Broomfield"),
+  Rib_fish_model %>% mutate(Site = "Rib")
+)
+
+# Plot all fish on the same plot
+
+ggplot(fish_combined, aes(x = Date, y = mean, color = Site)) +
+  geom_line() +
+  labs(
+    title = "Fish Population at Each Site Over Time",
+    y = "Population",
+    x = "Date"
+  )
 
 
 ```
