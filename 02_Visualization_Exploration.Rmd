@@ -1,9 +1,15 @@
 ---
 title: "Visualization and Exploration"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
-**Import Packages**
+# **02 - Exploration and Visualization**
+
+------------------------------------------------------------------------
+
+## Setup the Environment
 
 ```{r}
 
@@ -21,8 +27,6 @@ for (p in pkgs) {
 remove(pkgs, p)
 
 ```
-
-**Import Cleaned Data**
 
 ```{r}
 
@@ -67,6 +71,8 @@ ggplot(fish_combined, aes(x = Date, y = mean, color = Site)) +
 
 ```{r}
 
+# Combine Water Quality Datsets
+
 WQ_all <- WQ_Agincourt |>
   bind_rows(WQ_Broomfield, WQ_Rib)
 
@@ -87,8 +93,8 @@ WQ_all <- WQ_all |>
     )
   )
 
-library(lubridate)
-library(dplyr)
+
+# Perform 6-month rolling average calculation on Fish and WQ data
 
 fish_WQ_means6 <- fish_combined_filter |>
   rowwise() |>
@@ -139,6 +145,9 @@ fish_WQ_means6 <- fish_combined_filter |>
 ```
 
 ```{r}
+
+# Perform 3-month rolling average calculation on Fish and WQ data
+
 fish_WQ_means3 <- fish_combined_filter |>
   rowwise() |>
   mutate(
@@ -184,9 +193,13 @@ fish_WQ_means3 <- fish_combined_filter |>
     }
   ) |>
   ungroup()
+
 ```
 
 ```{r}
+
+# Create correlation matrix between fish abundance and other chemistry variables
+
 cor_matrix6 <- fish_WQ_means6 |>
   select(where(is.numeric)) |>
   drop_na() |>
@@ -197,6 +210,8 @@ cor_matrix3 <- fish_WQ_means3 |>
   drop_na() |>
   cor()
 
+# Plot the correlation marticies over both 3 and 6 month rolling intervals
+
 ggcorrplot(cor_matrix6) +
   labs(title = "Correlation Between 6 Month Avg. Water Quality\nand Mean Crown of Thorns Starfish Population")
   
@@ -205,12 +220,22 @@ ggcorrplot(cor_matrix3) +
 
 ```
 
-**Reflection**
+#### Summary of Current Analysis Performed
 
-·       Now that you have a sense for your data, discuss potential new figures/specific analyses that will give you further insights on your dataset.
+The first figure is a simple exploratory look at the fish abundance datasets. The data is plotted against time for the entire duration of the sample, with colors denoting the different research sites. Clear abundance spikes appear in the years after 2020, suggesting some sort of COVID-19 related fishing changes.
 
-·       What is your plan to go from your current workflow to the final analysis? i.e. what do you still need to do in terms of data requirements, types of analysis, etc.
+The second figure displays the correlation between different chemical variables and fish abundance, over both 3 and 6 month rolling average periods. The results show a stronger correlation between fish abundance and PH over a longer rolling average period, suggesting that pH changes may create their biggest effects over longer timescales.
 
-·       Identify if there are current/future analyses that you may need assistance or feedback on.
+While not shown in the figures, we have also examined much of the raw data to determine what timescale would be best for this analysis. Sometime between 2010 - 2023 seems to have the most quality data.
 
-·       (for groups) How has the workload currently been distributed so far? How will you distribute the work for the remaining part of the course?
+------------------------------------------------------------------------
+
+## **Reflection**
+
+1.  Now that we have a sense for our data, we anticipate running more correlation plots on the fish abundance data to determine which interval shows pH's effect the strongest. We will also look at the effect of confounding variables, like water quality and related variables like alkalinity, to ascertain the real cause of fish abundance shifts; we will likely perform this analysis with correlation matrices and lag plots. Further, we hope to determine the effect of Dissolved Inorganic Carbon (DIC) on the changes in pH. This will help us determine whether extra CO2 in the atmosphere is causing fish abudance changes.
+
+2.  To bridge our current workflow with our imagined final analysis, we will need to run more correlation plots (as described above). We further need to show that pH acidification, likely from rises in atmosphereic CO2, is the driver of fish abundance changes (due to GABA neurotransmitter inhibition). It may be helpful to import another research site's data to confirm this hypothesis. Some data also still needs to be cleaned (NAs removed and daily data summarized to weekly/monthly data).
+
+3.  We may want feedback on our more finalized correlation plots to ensure that we have removed confounding variable influence comprehensively.
+
+4.  The project workload has between distributed fairly evenly, with Brody doing most of the data importing and rough cleaning, and Austin performing most of the more nuanced data analysis. For the remaining portions of the project, Brody will take a more significant role in data analysis (plot generation) and Austin will aid in finding alternative data sources to bolster our final analysis.

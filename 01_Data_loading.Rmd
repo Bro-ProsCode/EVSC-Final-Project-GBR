@@ -3,7 +3,11 @@ title: "Data Loading"
 output: html_notebook
 ---
 
-**Import Packages**
+# **01 - Data Loading and Cleaning**
+
+------------------------------------------------------------------------
+
+## Setup the Environment
 
 ```{r}
 
@@ -20,15 +24,13 @@ for (p in pkgs) {
 
 ```
 
-**Import Data from Device**
+## Import Data from Device
 
 Here, we load data from all three of our main datasets on the GBR into dataframe for analysis.
 
 The datasets themselves will actually be local to our computers to avoid issues with pushing really large files; our folder structure will be mirrored so that the code works for each of us.
 
-I (Brody) will create a OneDrive folder which contains the full datasets so we both have the same versions in our personal "Data" folder.
-
-This is also the place to rename columns and perform necessary joins.
+Brody manages a OneDrive folder which contains the full datasets so we both have the same versions in our personal "Data" folder.
 
 ```{r}
 
