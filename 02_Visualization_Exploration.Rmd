@@ -9,7 +9,7 @@ output: html_notebook
 
 # Import packages reproducibily
 
-pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate')
+pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate', 'purrr', 'ggcorrplot')
 
 for (p in pkgs) {
   if (!require(p, character.only = TRUE)) {
@@ -17,6 +17,8 @@ for (p in pkgs) {
     library(p, character.only = TRUE)
   }
 }
+
+remove(pkgs, p)
 
 ```
 
@@ -57,8 +59,149 @@ ggplot(fish_combined, aes(x = Date, y = mean, color = Site)) +
     title = "Fish Population at Each Site Over Time",
     y = "Population",
     x = "Date"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r}
+
+WQ_all <- WQ_Agincourt |>
+  bind_rows(WQ_Broomfield, WQ_Rib)
+
+fish_combined_filter <- fish_combined |>
+  mutate(Date = as.Date(Date)) |>
+  filter(Date > as.Date("2010-12-01"),
+         Date < as.Date("2019-12-31"))
+
+WQ_all <- WQ_all |>
+  mutate(Date = as.Date(`Aggregated Date/Time`)) |>
+  rename(Site = `Site Name`) |>
+  mutate(
+    Site = case_when(
+      Site == "Agincourt Reef No 1" ~ "Agincourt",
+      Site == "Broomfield Reef" ~ "Broomfield",
+      Site == "Rib Reef" ~ "Rib",
+      TRUE ~ Site
+    )
   )
 
+library(lubridate)
+library(dplyr)
+
+fish_WQ_means6 <- fish_combined_filter |>
+  rowwise() |>
+  mutate(
+    temp_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
+          pull(temp),
+        na.rm = TRUE
+      )
+    },
+    salt_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
+          pull(salt),
+        na.rm = TRUE
+      )
+    },
+    PH_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
+          pull(PH),
+        na.rm = TRUE
+      )
+    },
+    DIC_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
+          pull(DIC),
+        na.rm = TRUE
+      )
+    }
+  ) |>
+  ungroup()
+
+```
+
+```{r}
+fish_WQ_means3 <- fish_combined_filter |>
+  rowwise() |>
+  mutate(
+    temp_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
+          pull(temp),
+        na.rm = TRUE
+      )
+    },
+    salt_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
+          pull(salt),
+        na.rm = TRUE
+      )
+    },
+    PH_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
+          pull(PH),
+        na.rm = TRUE
+      )
+    },
+    DIC_avg = {
+      d  <- Date
+      s  <- Site
+      mean(
+        WQ_all |>
+          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
+          pull(DIC),
+        na.rm = TRUE
+      )
+    }
+  ) |>
+  ungroup()
+```
+
+```{r}
+cor_matrix6 <- fish_WQ_means6 |>
+  select(where(is.numeric)) |>
+  drop_na() |>
+  cor()
+
+cor_matrix3 <- fish_WQ_means3 |>
+  select(where(is.numeric)) |>
+  drop_na() |>
+  cor()
+
+ggcorrplot(cor_matrix6) +
+  labs(title = "Correlation Between 6 Month Avg. Water Quality\nand Mean Crown of Thorns Starfish Population")
+  
+ggcorrplot(cor_matrix3) +
+  labs(title = "Correlation Between 3 Month Avg. Water Quality\nand Mean Crown of Thorns Starfish Population")
 
 ```
 

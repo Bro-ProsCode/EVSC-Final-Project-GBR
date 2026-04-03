@@ -100,7 +100,38 @@ Fish_AIMS_manta_clean <- Fish_AIMS_manta  |>
   filter(REEF_NAME == "AGINCOURT REEFS (NO 1)" | REEF_NAME == "BROOMFIELD REEF" | REEF_NAME == "RIB REEF") |>
   select(SAMPLE_DATE, REEF_NAME, TOTAL_COTS, TOTAL_TROUT)
 
+# Aggregate Chem and Phys for each Site
 
+WQ_Agincourt <- Phys_Agincourt |>
+  bind_rows(Chem_Agincourt) |>
+  arrange(`Aggregated Date/Time`) |>
+  select(`Aggregated Date/Time`, Variable, `Site Name`, mean) |>
+  pivot_wider(
+    names_from = Variable,
+    values_from = mean
+  ) |>
+  select(-omega_ar, -alk)
+
+WQ_Broomfield <- Phys_Broomfield |>
+  bind_rows(Chem_Broomfield) |>
+  arrange(`Aggregated Date/Time`) |>
+  select(`Aggregated Date/Time`, Variable, `Site Name`, mean) |>
+  pivot_wider(
+    names_from = Variable,
+    values_from = mean
+  ) |>
+  select(-omega_ar, -alk)
+
+WQ_Rib <- Phys_Rib |>
+  bind_rows(Chem_Rib) |>
+  arrange(`Aggregated Date/Time`) |>
+  select(`Aggregated Date/Time`, Variable, `Site Name`, mean) |>
+  pivot_wider(
+    names_from = Variable,
+    values_from = mean
+  ) |>
+  select(-omega_ar, -alk)
+  
 
 ```
 
@@ -110,10 +141,8 @@ Fish_AIMS_manta_clean <- Fish_AIMS_manta  |>
 
 vars <- c(
   "Agincourt_fish_model", "Broomfield_fish_model",
-  "Chem_Agincourt", "Chem_Broomfield", "CHEM_eReef", "Chem_Rib",
   "CO2_all_sites", "Fish_AIMS_manta_clean",
-  "pH_all_sites", "Phys_Agincourt", "Phys_Broomfield",
-  "PHYS_eReef", "Phys_Rib", "Rib_fish_model"
+  "pH_all_sites", "Rib_fish_model", "WQ_Agincourt", "WQ_Broomfield", "WQ_Rib"
 )
 
 for (v in vars) {
