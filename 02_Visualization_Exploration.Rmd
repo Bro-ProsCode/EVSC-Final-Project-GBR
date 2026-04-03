@@ -10,4 +10,16 @@ output: html_notebook
 
 
 
+
+
 ```
+
+**Reflection**
+
+·       Now that you have a sense for your data, discuss potential new figures/specific analyses that will give you further insights on your dataset.
+
+·       What is your plan to go from your current workflow to the final analysis? i.e. what do you still need to do in terms of data requirements, types of analysis, etc.
+
+·       Identify if there are current/future analyses that you may need assistance or feedback on.
+
+·       (for groups) How has the workload currently been distributed so far? How will you distribute the work for the remaining part of the course?

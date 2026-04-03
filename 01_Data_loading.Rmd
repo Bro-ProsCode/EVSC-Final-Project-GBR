@@ -32,31 +32,25 @@ This is also the place to rename columns and perform necessary joins.
 
 ```{r}
 
-# Import Water Temperature Data
+# Import all eReef Variables
 
-Temp_Davies <- read_csv("Data/Temperature/Davies_Temp.csv") |>
-  select(time, raw_value)
+CHEM_eReef <- read_csv("Data/eReef/eReef_CHEM_v2.csv")
+PHYS_eReef <- read_csv("Data/eReef/eReef_PHYS_v2.csv")
+  
+# Import Fish Data
 
-Temp_Heron <- read_csv("Data/Temperature/Heron_Temp.csv") |>
-  select(time, raw_value)
+Fish_AIMS_manta <- read_csv("Data/Fish/manta-tow-by-reef.csv")  # Large AIMS dataset
 
-Temp_Pandora <- read_csv("Data/Temperature/Pandora_Temp.csv") |>
-  select(time, cal_val)
+# Specific AIMS fish Data
 
+Agincourt_fish_model <- read_csv("Data/Fish/Agincourt_fish_modelled.csv") |>
+  select(date, mean)
 
-# Import Chemistry Variables
+Broomfield_fish_model <- read_csv("Data/Fish/Broomfield_fish_modelled.csv") |>
+  select(date, mean)
 
-Chem_eReef <- read_csv("Data/eReef/CHEM_Vars.csv") # Full Chem df
-
-# Import Physical Variables
-
-Phys_eReef <- read_csv("Data/eReef/PHYS_Vars.csv") # Full Phys df
-
-# Import Fish data
-
-Davies_fish <- read_csv("Data/Fish/Davies_fish.csv")
-
-Pandora_fish <- read_csv("Data/Fish/Pandora_fish.csv")
+Rib_fish_model <- read_csv("Data/Fish/Rib_fish_modelled.csv") |>
+  select(date, mean)
 
 ```
 
@@ -66,44 +60,60 @@ Pandora_fish <- read_csv("Data/Fish/Pandora_fish.csv")
 
 # Extract pH data
 
-pH_all_sites <- Chem_eReef |>
+pH_all_sites <- CHEM_eReef |>
   filter(Variable == "PH") |>
   pivot_wider(names_from = Variable, values_from = mean) |>
   select(`Site Name`, `Aggregated Date/Time`, PH)
 
 # Extract CO2 data
 
-CO2_all_sites <- Chem_eReef |>
+CO2_all_sites <- CHEM_eReef |>
   filter(Variable == "DIC") |>
   pivot_wider(names_from = Variable, values_from = mean) |>
   select(`Site Name`, `Aggregated Date/Time`, DIC)
 
 # Split Chem Data
 
-Chem_Davies <- Chem_eReef |>
-  filter(`Site Name` == "Davies Reef")
-Chem_Heron <- Chem_eReef |>
-  filter(`Site Name` == "Heron Island")
-Chem_Pandora <- Chem_eReef |>
-  filter(`Site Name` == "Pandora Reef")
+Chem_Agincourt <- CHEM_eReef |>
+  filter(`Site Name` == "Agincourt Reef No 1")
+Chem_Rib <- CHEM_eReef |>
+  filter(`Site Name` == "Rib Reef")
+Chem_Broomfield <- CHEM_eReef |>
+  filter(`Site Name` == "Broomfield Reef")
 
 # Split Phys Data
 
-Phys_Davies <- Phys_eReef |>
-  filter(`Site Name` == "Davies Reef")
-Phys_Heron <- Phys_eReef |>
-  filter(`Site Name` == "Heron Island")
-Phys_Pandora <- Phys_eReef |>
-  filter(`Site Name` == "Pandora Reef")
+Phys_Agincourt <- PHYS_eReef |>
+  filter(`Site Name` == "Agincourt Reef No 1")
+Phys_Rib <- PHYS_eReef |>
+  filter(`Site Name` == "Rib Reef")
+Phys_Broomfield <- PHYS_eReef |>
+  filter(`Site Name` == "Broomfield Reef")
 
 # Format Fish Data
 
-Pandora_fish_clean <- Pandora_fish |>
-  mutate(Date = decimal_date(as.POSIXct(date))) |>
-  select(Date, mean)
+Fish_AIMS_manta_clean <- Fish_AIMS_manta  |>
+  filter(REEF_NAME == "AGINCOURT REEFS (NO 1)" | REEF_NAME == "BROOMFIELD REEF" | REEF_NAME == "RIB REEF") |>
+  select(SAMPLE_DATE, REEF_NAME, TOTAL_COTS, TOTAL_TROUT)
 
-Davies_fish_clean <- Davies_fish |>
-  mutate(Date = decimal_date(as.POSIXct(survey_date))) |>
-  select(Date, tows, cots)
+
+
+```
+
+**Export the Cleaned Data**
+
+```{r}
+
+vars <- c(
+  "Agincourt_fish_model", "Broomfield_fish_model",
+  "Chem_Agincourt", "Chem_Broomfield", "CHEM_eReef", "Chem_Rib",
+  "CO2_all_sites", "Fish_AIMS_manta_clean",
+  "pH_all_sites", "Phys_Agincourt", "Phys_Broomfield",
+  "PHYS_eReef", "Phys_Rib", "Rib_fish_model"
+)
+
+for (v in vars) {
+  saveRDS(get(v), paste0("Data/Cleaned_Data/", v, ".rds"))
+}
 
 ```
