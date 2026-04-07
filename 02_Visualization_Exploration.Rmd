@@ -69,18 +69,21 @@ ggplot(fish_combined, aes(x = Date, y = mean, color = Site)) +
 
 ```
 
+### Monthly Matrices
+
 ```{r}
-
-# Combine Water Quality Datsets
-
+# Combine water quality datasets
 WQ_all <- WQ_Agincourt |>
   bind_rows(WQ_Broomfield, WQ_Rib)
 
+# Filter starfish dataset to align with water quality set
 fish_combined_filter <- fish_combined |>
   mutate(Date = as.Date(Date)) |>
   filter(Date > as.Date("2010-12-01"),
-         Date < as.Date("2019-12-31"))
+         Date < as.Date("2019-12-31")) |>
+  rename(Starfish = mean)
 
+# Rename
 WQ_all <- WQ_all |>
   mutate(Date = as.Date(`Aggregated Date/Time`)) |>
   rename(Site = `Site Name`) |>
@@ -93,131 +96,127 @@ WQ_all <- WQ_all |>
     )
   )
 
-
-# Perform 6-month rolling average calculation on Fish and WQ data
-
-fish_WQ_means6 <- fish_combined_filter |>
-  rowwise() |>
-  mutate(
-    temp_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
-          pull(temp),
-        na.rm = TRUE
-      )
-    },
-    salt_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
-          pull(salt),
-        na.rm = TRUE
-      )
-    },
-    PH_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
-          pull(PH),
-        na.rm = TRUE
-      )
-    },
-    DIC_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(6)) |>
-          pull(DIC),
-        na.rm = TRUE
-      )
-    }
-  ) |>
-  ungroup()
-
 ```
 
 ```{r}
-
-# Perform 3-month rolling average calculation on Fish and WQ data
-
-fish_WQ_means3 <- fish_combined_filter |>
-  rowwise() |>
-  mutate(
-    temp_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
-          pull(temp),
-        na.rm = TRUE
-      )
-    },
-    salt_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
-          pull(salt),
-        na.rm = TRUE
-      )
-    },
-    PH_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
-          pull(PH),
-        na.rm = TRUE
-      )
-    },
-    DIC_avg = {
-      d  <- Date
-      s  <- Site
-      mean(
-        WQ_all |>
-          filter(Site == s, Date < d, Date >= d %m-% months(3)) |>
-          pull(DIC),
-        na.rm = TRUE
-      )
-    }
-  ) |>
-  ungroup()
-
-```
-
-```{r}
-
-# Create correlation matrix between fish abundance and other chemistry variables
-
-cor_matrix6 <- fish_WQ_means6 |>
-  select(where(is.numeric)) |>
-  drop_na() |>
-  cor()
-
-cor_matrix3 <- fish_WQ_means3 |>
-  select(where(is.numeric)) |>
-  drop_na() |>
-  cor()
-
-# Plot the correlation marticies over both 3 and 6 month rolling intervals
-
-ggcorrplot(cor_matrix6) +
-  labs(title = "Correlation Between 6 Month Avg. Water Quality\nand Mean Crown of Thorns Starfish Population")
+# Define function to generate correlation matrices for variables average over prior
+# number of months (m)
+monthly_matrices <- function(fish_data, WQ_all, max_month = 24) {
   
-ggcorrplot(cor_matrix3) +
-  labs(title = "Correlation Between 3 Month Avg. Water Quality\nand Mean Crown of Thorns Starfish Population")
+  map_dfr(1:max_month, function(m) {
+    
+    fish_WQ_means <- fish_data |>
+      rowwise() |>
+      mutate(
+        temp_avg = {
+          d <- Date; s <- Site
+          mean(
+            WQ_all |>
+              filter(Site == s, Date < d, Date >= d %m-% months(m)) |>
+              pull(temp),
+            na.rm = TRUE
+          )
+        },
+        Salt_avg = {
+          d <- Date; s <- Site
+          mean(
+            WQ_all |>
+              filter(Site == s, Date < d, Date >= d %m-% months(m)) |>
+              pull(salt),
+            na.rm = TRUE
+          )
+        },
+        PH_avg = {
+          d <- Date; s <- Site
+          mean(
+            WQ_all |>
+              filter(Site == s, Date < d, Date >= d %m-% months(m)) |>
+              pull(PH),
+            na.rm = TRUE
+          )
+        },
+        DIC_avg = {
+          d <- Date; s <- Site
+          mean(
+            WQ_all |>
+              filter(Site == s, Date < d, Date >= d %m-% months(m)) |>
+              pull(DIC),
+            na.rm = TRUE
+          )
+        }
+      ) |>
+      ungroup()
+    
+    cor_matrix <- fish_WQ_means |>
+      select(where(is.numeric)) |>
+      drop_na() |>
+      cor()
+    
+    as.data.frame(as.table(cor_matrix)) |>
+      rename(r = Freq) |>
+      mutate(month_window = m)
+  })
+}
 
+```
+
+```{r}
+# Run function to create output dataframe
+cor_results <- monthly_matrices(
+  fish_data = fish_combined_filter,
+  WQ_all = WQ_all,
+  max_month = 24) |>
+  filter(Var1 != Var2)
+
+```
+
+```{r}
+# Create dataframe of strongest correlations
+strongest_pairs <- cor_results |>
+  
+  # 1. remove self-correlations
+  filter(Var1 != Var2) |>
+  
+  # 2. create ordered pair to remove duplicates
+  mutate(
+    var_low  = pmin(as.character(Var1), as.character(Var2)),
+    var_high = pmax(as.character(Var1), as.character(Var2))
+  ) |>
+
+  # 3. group by unique variable pair
+  group_by(var_low, var_high) |>
+  
+  # 4. find strongest magnitude across months
+  mutate(abs_r = abs(r)) |>
+  slice_max(abs_r, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  select(
+    Var1 = var_low,
+    Var2 = var_high,
+    r,
+    month_window
+  )
+
+strongest_pairs
+
+```
+
+```{r}
+ggplot(strongest_pairs, 
+       aes(x = Var1, y = Var2, fill = r)) +
+  geom_tile() +
+  scale_fill_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Strongest Correlation (Across 1–24 Month Windows)",
+    fill = "Correlation (r)"
+  ) +
+  coord_equal()
 ```
 
 #### Summary of Current Analysis Performed
