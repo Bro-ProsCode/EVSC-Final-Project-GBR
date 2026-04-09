@@ -308,15 +308,40 @@ The second figure displays the correlation between different chemical variables 
 
 While not shown in the figures, we have also examined much of the raw data to determine what timescale would be best for this analysis. Sometime between 2010 - 2023 seems to have the most quality data.
 
+### Combine fish abundance with chemical and physical variables
+
+```{r}
+
+# Summarize chem to yearly means
+
+chem_yearly <- WQ_all |>
+  mutate(Year = year(Date)) |>
+  group_by(Site, Year) |>
+  summarise(across(c(temp, salt, PH, DIC), mean, na.rm = TRUE), .groups = "drop")
+
+# Summarize the fish data to unified yearly data
+
+fish_combined_yearly <- fish_combined |>
+  mutate(Year = year(Date))
+
+# Join to fish data by Site and Year
+
+All_fish_all_vars <- fish_combined_yearly |>
+  left_join(chem_yearly, by = c("Site", "Year"))
+
+```
+
 ------------------------------------------------------------------------
 
 ## [Final analysis steps:]{.underline}
 
 ### Connect pH to fish abundance
 
-Futher determine the correlation between fish abundance and pH via more correlation matricies:
+Futher determine the correlation between fish abundance and pH via more correlation matrices:
 
 ```{r}
+
+
 
 
 
@@ -325,6 +350,9 @@ Futher determine the correlation between fish abundance and pH via more correlat
 Create various regression models to examine correlation coefficients across the variables:
 
 ```{r}
+
+model <- lm(mean ~ temp_avg + salt_avg + PH_avg + DIC_avg, data = fish_WQ_means3)
+summary(model)
 
 
 ```
