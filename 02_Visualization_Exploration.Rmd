@@ -15,7 +15,7 @@ output:
 
 # Import packages reproducibily
 
-pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate', 'purrr', 'ggcorrplot')
+pkgs <- c('tidyverse', 'readr', 'dplyr', 'lubridate', 'purrr', 'ggcorrplot', 'patchwork')
 
 for (p in pkgs) {
   if (!require(p, character.only = TRUE)) {
@@ -294,8 +294,6 @@ plot_list <- pmap(
 ```
 
 ```{r, fig.width=14, fig.height=18}
-
-library(patchwork)
 
 wrap_plots(plot_list, ncol = 2)
 ```

@@ -102,7 +102,7 @@ Phys_Broomfield <- PHYS_eReef |>
 
 Fish_AIMS_manta_clean <- Fish_AIMS_manta  |>
   filter(REEF_NAME == "AGINCOURT REEFS (NO 1)" | REEF_NAME == "BROOMFIELD REEF" | REEF_NAME == "RIB REEF") |>
-  select(SAMPLE_DATE, REEF_NAME, TOTAL_COTS, TOTAL_TROUT)
+  select(SAMPLE_DATE, REEF_NAME, TOTAL_COTS, TOTAL_TROUT, MEAN_LIVE_CORAL)
 
 # Aggregate Chem and Phys for each Site
 
