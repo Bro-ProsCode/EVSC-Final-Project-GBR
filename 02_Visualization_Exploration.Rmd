@@ -108,7 +108,7 @@ monthly_matrices <- function(fish_data, WQ_all, max_month = 24) {
     fish_WQ_means <- fish_data |>
       rowwise() |>
       mutate(
-        temp_avg = {
+        Temp_avg = {
           d <- Date; s <- Site
           mean(
             WQ_all |>
@@ -217,6 +217,87 @@ ggplot(strongest_pairs,
     fill = "Correlation (r)"
   ) +
   coord_equal()
+```
+
+### Plot each relationship over optimal averaging window:
+
+```{r}
+compute_means <- function(fish_data, WQ_all, m) {
+  fish_data |>
+    rowwise() |>
+    mutate(
+      Temp_avg = {
+        d <- Date; s <- Site
+        mean(WQ_all |>
+               filter(Site == s,
+                      Date < d,
+                      Date >= d %m-% months(m)) |>
+               pull(temp),
+             na.rm = TRUE)
+      },
+      Salt_avg = {
+        d <- Date; s <- Site
+        mean(WQ_all |>
+               filter(Site == s,
+                      Date < d,
+                      Date >= d %m-% months(m)) |>
+               pull(salt),
+             na.rm = TRUE)
+      },
+      PH_avg = {
+        d <- Date; s <- Site
+        mean(WQ_all |>
+               filter(Site == s,
+                      Date < d,
+                      Date >= d %m-% months(m)) |>
+               pull(PH),
+             na.rm = TRUE)
+      },
+      DIC_avg = {
+        d <- Date; s <- Site
+        mean(WQ_all |>
+               filter(Site == s,
+                      Date < d,
+                      Date >= d %m-% months(m)) |>
+               pull(DIC),
+             na.rm = TRUE)
+      }
+    ) |>
+    ungroup()
+}
+
+```
+
+```{r}
+plot_list <- pmap(
+  strongest_pairs,
+  function(Var1, Var2, r, month_window) {
+    
+    # recompute data using optimal window
+    df <- compute_means(fish_combined_filter, WQ_all, month_window)
+    
+    # plot relationship
+    ggplot(df, aes_string(x = Var1, y = Var2)) +
+      geom_point(alpha = 0.6) +
+      geom_smooth(method = "lm", se = TRUE) +
+      theme_minimal() +
+      labs(
+        title = paste(Var1, "vs", Var2),
+        subtitle = paste("Best window:", month_window,
+                         "| r =", round(r, 2)),
+        x = Var1,
+        y = Var2
+      )
+  }
+)
+
+```
+
+```{r, fig.width=14, fig.height=18}
+
+library(patchwork)
+
+wrap_plots(plot_list, ncol = 2)
 ```
 
 #### Summary of Current Analysis Performed
