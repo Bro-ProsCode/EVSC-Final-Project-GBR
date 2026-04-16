@@ -349,8 +349,6 @@ Create various regression models to examine correlation coefficients across the 
 
 ```{r}
 
-model <- lm(mean ~ temp_avg + salt_avg + PH_avg + DIC_avg, data = fish_WQ_means3)
-summary(model)
 
 
 ```
