@@ -76,12 +76,12 @@ ggplot(fish_combined, aes(x = Date, y = mean, color = Site)) +
 WQ_all <- WQ_Agincourt |>
   bind_rows(WQ_Broomfield, WQ_Rib)
 
-# Filter starfish dataset to align with water quality set
+# Filter fish dataset to align with water quality set
 fish_combined_filter <- fish_combined |>
   mutate(Date = as.Date(Date)) |>
   filter(Date > as.Date("2010-12-01"),
          Date < as.Date("2019-12-31")) |>
-  rename(Starfish = mean)
+  rename(Fish = mean)
 
 # Rename
 WQ_all <- WQ_all |>
@@ -269,33 +269,30 @@ compute_means <- function(fish_data, WQ_all, m) {
 ```
 
 ```{r}
-plot_list <- pmap(
+data_averages_all <- pmap_dfr(
   strongest_pairs,
   function(Var1, Var2, r, month_window) {
     
-    # recompute data using optimal window
     df <- compute_means(fish_combined_filter, WQ_all, month_window)
     
-    # plot relationship
-    ggplot(df, aes_string(x = Var1, y = Var2)) +
-      geom_point(alpha = 0.6) +
-      geom_smooth(method = "lm", se = TRUE) +
-      theme_minimal() +
-      labs(
-        title = paste(Var1, "vs", Var2),
-        subtitle = paste("Best window:", month_window,
-                         "| r =", round(r, 2)),
-        x = Var1,
-        y = Var2
-      )
+    tibble(
+      x = df[[Var1]],
+      y = df[[Var2]],
+      Var1 = Var1,
+      Var2 = Var2,
+      r = r,
+      month_window = month_window
+    )
   }
 )
-
 ```
 
 ```{r, fig.width=14, fig.height=18}
-
-wrap_plots(plot_list, ncol = 2)
+ggplot(data_averages_all, aes(x = x, y = y)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE) +
+  facet_wrap(~ Var1 + Var2, ncol = 2, scales = "free") +
+  theme_minimal()
 ```
 
 #### Summary of Current Analysis Performed
@@ -341,8 +338,6 @@ Futher determine the correlation between fish abundance and pH via more correlat
 
 
 
-
-
 ```
 
 Create various regression models to examine correlation coefficients across the variables:
@@ -357,10 +352,69 @@ Create various regression models to examine correlation coefficients across the 
 
 Run more correlation analysis on the DIC and pH:
 
-```{r}
+```{r, fig.width=4, fig.height=4}
+
+DIC_pH <- data_averages_all |>
+  filter(Var1 == "DIC_avg", Var2 == "PH_avg")
+
+pH_Fish <- data_averages_all |>
+  filter(Var1 == "Fish", Var2 == "PH_avg")
+
+ggplot(DIC_pH, aes(x = x, y = y)) +
+  geom_point(color = "mediumaquamarine", size = 2) +
+  geom_smooth(method = "lm", col = "mediumaquamarine") +
+  labs(
+    title = "DIC and pH across Sites and Time",
+    subtitle = paste("r =", round(unique(DIC_pH$r), 2)),
+    x = "Dissolved Inorganic Carbon",
+    y = "pH"
+  ) +
+  theme_minimal()
+
+ggplot(pH_Fish, aes(x = y, y = x)) +
+  geom_point(color = "coral", size = 2) +
+  geom_smooth(method = "lm", col = "coral") +
+  labs(
+    title = "pH and Fish across Sites and Time",
+    subtitle = paste("r =", round(unique(pH_Fish$r), 2)),
+    x = "pH",
+    y = "Fish Abundance"
+  ) +
+  theme_minimal()
+
+```
+
+```{r, fig.width=5, fig.height=2}
+fish_round <- fish_combined |>
+  mutate(round = round(mean, 5))
+
+pH_fish_ts <- pH_Fish |>
+  select(-Var1, -Var2) |>
+  rename(Fish = x, PH_avg = y) |>
+  mutate(Fish = round(Fish, 5)) |>
+  left_join(fish_round, by = c("Fish" = "round"))
+
+ggplot(pH_fish_ts, aes(x = Date, y = Fish, col = Site)) +
+  geom_line() +
+  theme_minimal() +
+  labs(
+    x = "Date",
+    y = "Fish Abundance",
+    color = "Site") + 
+  theme(legend.position = "none")
 
 
+```
 
+```{r, fig.width=5, fig.height=2.5}
+ggplot(pH_fish_ts, aes(x = Date, y = PH_avg, col = Site)) +
+  geom_line() +
+  theme_minimal() +
+  labs(
+    x = "Date",
+    y = "pH",
+    color = "Site") + 
+  theme(legend.position = "bottom")
 ```
 
 ### Conclude that DIC correlates with fish abundance
